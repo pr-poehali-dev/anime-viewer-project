@@ -195,19 +195,26 @@ const WatchAnime = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Инициализация данных аниме при первой загрузке компонента
+    if (!window.animeData) {
+      window.animeData = animeData;
+    }
+
     // Симуляция загрузки данных
     setLoading(true);
 
     setTimeout(() => {
-      const animeData = window.animeData as any;
-      if (animeData && animeData[animeId]) {
-        setAnime(animeData[animeId]);
+      // Используем локальные данные напрямую вместо window.animeData
+      // для большей надежности
+      if (animeData[animeId as keyof typeof animeData]) {
+        const selectedAnime = animeData[animeId as keyof typeof animeData];
+        setAnime(selectedAnime);
 
         // Если эпизод не указан, установить первый эпизод по умолчанию
-        if (!currentEpisodeId && animeData[animeId].episodes.length > 0) {
-          setCurrentEpisodeId(animeData[animeId].episodes[0].id);
+        if (!currentEpisodeId && selectedAnime.episodes.length > 0) {
+          setCurrentEpisodeId(selectedAnime.episodes[0].id);
           // Обновление URL для включения ID эпизода
-          navigate(`/watch/${animeId}/${animeData[animeId].episodes[0].id}`, {
+          navigate(`/watch/${animeId}/${selectedAnime.episodes[0].id}`, {
             replace: true,
           });
         }
@@ -218,7 +225,14 @@ const WatchAnime = () => {
         setLoading(false);
       }
     }, 800);
-  }, [animeId, currentEpisodeId, navigate]);
+  }, [animeId, navigate]);
+
+  // Обновить эпизод при изменении URL
+  useEffect(() => {
+    if (episodeId && episodeId !== currentEpisodeId) {
+      setCurrentEpisodeId(episodeId);
+    }
+  }, [episodeId, currentEpisodeId]);
 
   // Обрабатываем изменение эпизода
   const handleEpisodeSelect = (episodeId: string) => {

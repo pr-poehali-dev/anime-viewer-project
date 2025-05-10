@@ -9,6 +9,13 @@ import WatchAnime from "./pages/WatchAnime";
 
 const queryClient = new QueryClient();
 
+// Интерфейс для моковых данных аниме
+declare global {
+  interface Window {
+    animeData: any;
+  }
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
