@@ -1,11 +1,10 @@
-
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useVideoPlayer } from './useVideoPlayer';
-import PlayerHeader from './Header';
-import BigPlayButton from './BigPlayButton';
-import BufferingIndicator from './BufferingIndicator';
-import { PlayerControls } from './Controls';
+import { useVideoPlayer } from "./useVideoPlayer";
+import PlayerHeader from "./Header";
+import BigPlayButton from "./BigPlayButton";
+import BufferingIndicator from "./BufferingIndicator";
+import { PlayerControls } from "./Controls";
 
 interface VideoPlayerProps {
   videoSrc: string;
@@ -18,7 +17,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoSrc,
   title,
   poster,
-  autoPlay = false
+  autoPlay = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
@@ -39,11 +38,42 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     handleKeyboardControls,
     handleMouseEnter,
     handleMouseLeave,
-    handleMouseMove
+    handleMouseMove,
   } = useVideoPlayer(autoPlay);
 
+  // Добавим информацию о загрузке видео в консоль
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadStart = () => {
+      console.log("Видео начало загружаться:", videoSrc);
+    };
+
+    const handleLoadedData = () => {
+      console.log("Видео загружено и готово к воспроизведению:", videoSrc);
+    };
+
+    const handleError = (e: Event) => {
+      console.error(
+        "Ошибка загрузки видео:",
+        video.error?.message || "Неизвестная ошибка",
+      );
+    };
+
+    video.addEventListener("loadstart", handleLoadStart);
+    video.addEventListener("loadeddata", handleLoadedData);
+    video.addEventListener("error", handleError);
+
+    return () => {
+      video.removeEventListener("loadstart", handleLoadStart);
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.removeEventListener("error", handleError);
+    };
+  }, [videoSrc]);
+
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative bg-black w-full aspect-video rounded-md overflow-hidden focus:outline-none"
       tabIndex={0}
@@ -52,36 +82,33 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
     >
-      {/* Видео */}
-      <video 
+      {/* Видео с коррекцией для кроссбраузерной совместимости */}
+      <video
         ref={videoRef}
         className="w-full h-full"
         poster={poster}
         autoPlay={autoPlay}
         onClick={togglePlay}
         src={videoSrc}
+        preload="auto"
+        crossOrigin="anonymous"
+        playsInline
       />
 
-      {/* Наложение для контроля видео */}
-      <div 
+      {/* Остальные компоненты без изменений */}
+      <div
         className={cn(
           "absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300",
-          isControlsVisible ? "opacity-100" : "opacity-0"
+          isControlsVisible ? "opacity-100" : "opacity-0",
         )}
         onClick={togglePlay}
       />
 
-      {/* Верхняя панель с заголовком */}
       <PlayerHeader title={title} isControlsVisible={isControlsVisible} />
-
-      {/* Центральная кнопка воспроизведения */}
       <BigPlayButton isVisible={!isPlaying} onClick={togglePlay} />
-
-      {/* Индикатор буферизации */}
       <BufferingIndicator isBuffering={isBuffering} />
 
-      {/* Панель управления (нижняя) */}
-      <PlayerControls 
+      <PlayerControls
         isPlaying={isPlaying}
         muted={muted}
         volume={volume}

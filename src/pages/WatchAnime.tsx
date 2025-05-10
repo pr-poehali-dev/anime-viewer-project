@@ -255,8 +255,25 @@ const WatchAnime = () => {
       ? anime?.episodes[currentIndex + 1]
       : null;
 
-  // Симулируем URL для видео (в реальном приложении здесь был бы настоящий URL)
-  const videoSrc = `https://example.com/videos/${animeId}/${currentEpisodeId}.mp4`;
+  // Используем реальные URL для тестовых видео вместо фиктивных
+  const videoSrc =
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
+  // Альтернативные видео для разных эпизодов, чтобы продемонстрировать переключение
+  const getVideoSource = () => {
+    // Используем разные тестовые видео в зависимости от номера эпизода
+    const testVideos = [
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    ];
+
+    if (!currentEpisode) return testVideos[0];
+    const index = (currentEpisode.number - 1) % testVideos.length;
+    return testVideos[index];
+  };
 
   // Отображаем загрузку
   if (loading) {

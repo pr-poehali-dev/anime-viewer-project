@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 
 export const useVideoPlayer = (autoPlay: boolean = false) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -12,7 +11,7 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
   const [isBuffering, setIsBuffering] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
-  
+
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -21,6 +20,7 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
 
     const onLoadedMetadata = () => {
       setDuration(video.duration);
+      console.log("Метаданные видео загружены, длительность:", video.duration);
     };
 
     const onTimeUpdate = () => {
@@ -29,30 +29,59 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
 
     const onEnded = () => {
       setIsPlaying(false);
+      console.log("Воспроизведение видео завершено");
     };
 
     const onWaiting = () => {
       setIsBuffering(true);
+      console.log("Буферизация видео...");
     };
 
     const onPlaying = () => {
       setIsBuffering(false);
+      setIsPlaying(true);
+      console.log("Воспроизведение видео началось");
     };
 
-    video.addEventListener('loadedmetadata', onLoadedMetadata);
-    video.addEventListener('timeupdate', onTimeUpdate);
-    video.addEventListener('ended', onEnded);
-    video.addEventListener('waiting', onWaiting);
-    video.addEventListener('playing', onPlaying);
+    const onPause = () => {
+      setIsPlaying(false);
+      console.log("Видео приостановлено");
+    };
+
+    // Обработчик ошибок при загрузке видео
+    const onError = () => {
+      console.error(
+        "Ошибка при загрузке видео:",
+        video.error?.message || "Неизвестная ошибка",
+      );
+      setIsBuffering(false);
+    };
+
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
+    video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("ended", onEnded);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("error", onError);
+
+    // Пробуем воспроизвести видео, если autoPlay = true
+    if (autoPlay) {
+      video.play().catch((err) => {
+        console.warn("Автовоспроизведение не удалось:", err.message);
+      });
+    }
 
     return () => {
-      video.removeEventListener('loadedmetadata', onLoadedMetadata);
-      video.removeEventListener('timeupdate', onTimeUpdate);
-      video.removeEventListener('ended', onEnded);
-      video.removeEventListener('waiting', onWaiting);
-      video.removeEventListener('playing', onPlaying);
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("ended", onEnded);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("error", onError);
     };
-  }, []);
+  }, [autoPlay]);
 
   // Автоскрытие элементов управления
   useEffect(() => {
@@ -101,7 +130,7 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
     const volumeValue = newValue[0];
     video.volume = volumeValue / 100;
     setVolume(volumeValue);
-    
+
     if (volumeValue === 0) {
       setMuted(true);
       video.muted = true;
@@ -125,8 +154,10 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
     if (!container) return;
 
     if (!document.fullscreenElement) {
-      container.requestFullscreen().catch(err => {
-        console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
+      container.requestFullscreen().catch((err) => {
+        console.error(
+          `Ошибка при переходе в полноэкранный режим: ${err.message}`,
+        );
       });
       setIsFullScreen(true);
     } else {
@@ -135,36 +166,39 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
     }
   };
 
-  const handleKeyboardControls = (e: React.KeyboardEvent, containerRef: React.RefObject<HTMLDivElement>) => {
+  const handleKeyboardControls = (
+    e: React.KeyboardEvent,
+    containerRef: React.RefObject<HTMLDivElement>,
+  ) => {
     const video = videoRef.current;
     if (!video) return;
 
     // Пробел - пауза/воспроизведение
-    if (e.code === 'Space') {
+    if (e.code === "Space") {
       e.preventDefault();
       togglePlay();
     }
-    
+
     // Стрелка вправо - перемотать вперед на 10 секунд
-    if (e.code === 'ArrowRight') {
+    if (e.code === "ArrowRight") {
       e.preventDefault();
       video.currentTime = Math.min(video.currentTime + 10, video.duration);
     }
-    
+
     // Стрелка влево - перемотать назад на 10 секунд
-    if (e.code === 'ArrowLeft') {
+    if (e.code === "ArrowLeft") {
       e.preventDefault();
       video.currentTime = Math.max(video.currentTime - 10, 0);
     }
-    
+
     // F - полноэкранный режим
-    if (e.code === 'KeyF') {
+    if (e.code === "KeyF") {
       e.preventDefault();
       toggleFullScreen(containerRef);
     }
-    
+
     // M - приглушить/включить звук
-    if (e.code === 'KeyM') {
+    if (e.code === "KeyM") {
       e.preventDefault();
       toggleMute();
     }
@@ -205,7 +239,8 @@ export const useVideoPlayer = (autoPlay: boolean = false) => {
     toggleMute,
     handleVolumeChange,
     handleSeek,
-    toggleFullScreen: (containerRef: React.RefObject<HTMLDivElement>) => toggleFullScreen(containerRef),
+    toggleFullScreen: (containerRef: React.RefObject<HTMLDivElement>) =>
+      toggleFullScreen(containerRef),
     handleKeyboardControls,
     handleMouseEnter,
     handleMouseLeave,
